@@ -1,0 +1,100 @@
+﻿@page "/"
+@using SearchAdsLocation.Data
+@inject AdsService AdsService
+
+<h3>Загрузка рекламных площадок</h3>
+
+<InputFile OnChange="@(async e => await UploadFile(e))" accept=".txt" />
+@if (uploadMessage != null)
+{
+    <p>@uploadMessage</p>
+}
+
+<hr />
+
+<h3>Поиск площадок по локации</h3>
+<input @bind="searchLocation" placeholder="/ru/svrd/revda" />
+<button @onclick="Search" disabled="@isSearching">Поиск</button>
+
+@if (isSearching)
+{
+    <p>Идет поиск...</p>
+}
+
+@if (searchResults?.Any() == true)
+{
+    <h4>Результаты:</h4>
+    <ul>
+        @foreach (var name in searchResults)
+        {
+            <li>@name</li>
+        }
+    </ul>
+}
+else if (searched && !isSearching && !searchResults?.Any() == true)
+{
+    <p>Ничего не найдено</p>
+}
+
+@code {
+    string? uploadMessage;
+    string searchLocation = "";
+    List<string>? searchResults;
+    bool searched = false;
+    bool isSearching = false; 
+
+    async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+
+            if (file.Name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                uploadMessage = "Загрузка файла...";
+
+                using var stream = file.OpenReadStream();
+                await AdsService.UploadAsync(stream);
+
+                uploadMessage = $"Файл \"{file.Name}\" загружен успешно";
+            }
+            else
+            {
+                uploadMessage = "Ошибка: нужно выбрать файл с расширением .txt";
+            }
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Ошибка загрузки файла: {ex.Message}";
+        }
+    }
+
+    async Task Search()
+    {
+        if (string.IsNullOrWhiteSpace(searchLocation))
+        {
+            searchResults = new List<string>(); 
+            return;
+        }
+
+        searched = false;  
+        isSearching = true;
+
+        try
+        {
+            
+            searchResults = await AdsService.SearchAsync(searchLocation);
+
+            
+            searched = true;
+        }
+        catch (Exception ex)
+        {
+            searchResults = new List<string> { $"Ошибка поиска: {ex.Message}" };
+        }
+        finally
+        {
+            isSearching = false;
+        }
+    }
+}
