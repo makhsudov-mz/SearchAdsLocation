@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 
 namespace SearchAdsLocation.Data
 {
@@ -14,7 +12,7 @@ namespace SearchAdsLocation.Data
     {
         private readonly TrieNode _root = new TrieNode();
 
-        public void AddLocation(List<string> location, string platformName)
+        public void AddLocation(IReadOnlyList<string> location, string platformName)
         {
             var currentNode = _root;
 
@@ -30,7 +28,7 @@ namespace SearchAdsLocation.Data
             currentNode.Platforms.Add(platformName);
         }
 
-        public HashSet<string> SearchLocations(List<string> location)
+        public HashSet<string> SearchLocations(IReadOnlyList<string> location)
         {
             var currentNode = _root;
             var result = new HashSet<string>(StringComparer.Ordinal);
@@ -48,7 +46,7 @@ namespace SearchAdsLocation.Data
             return result;
         }
 
-        private void CollectPlatforms(TrieNode node, HashSet<string> result)
+        private static void CollectPlatforms(TrieNode node, HashSet<string> result)
         {
             if (node.Platforms.Any())
             {
@@ -69,7 +67,7 @@ namespace SearchAdsLocation.Data
     {
         private readonly Trie _trie = new Trie();
 
-        private List<string> NormalizeLocation(string loc)
+        private static IReadOnlyList<string> NormalizeLocation(string loc)
         {
             if (string.IsNullOrWhiteSpace(loc)) return null;
             loc = loc.Trim();
@@ -109,7 +107,7 @@ namespace SearchAdsLocation.Data
             }
         }
 
-        public async Task<List<string>> SearchAsync(string location)
+        public async Task<IReadOnlyList<string>> SearchAsync(string location)
         {
             var normQuery = NormalizeLocation(location);
             if (normQuery == null) return new List<string>();
